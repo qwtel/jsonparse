@@ -1,61 +1,62 @@
 /*global Buffer*/
 // Named constants with unique integer values
-var C = {};
+const C = {};
 // Tokens
-var LEFT_BRACE    = C.LEFT_BRACE    = 0x1;
-var RIGHT_BRACE   = C.RIGHT_BRACE   = 0x2;
-var LEFT_BRACKET  = C.LEFT_BRACKET  = 0x3;
-var RIGHT_BRACKET = C.RIGHT_BRACKET = 0x4;
-var COLON         = C.COLON         = 0x5;
-var COMMA         = C.COMMA         = 0x6;
-var TRUE          = C.TRUE          = 0x7;
-var FALSE         = C.FALSE         = 0x8;
-var NULL          = C.NULL          = 0x9;
-var STRING        = C.STRING        = 0xa;
-var NUMBER        = C.NUMBER        = 0xb;
+const LEFT_BRACE    = C.LEFT_BRACE    = 0x1;
+const RIGHT_BRACE   = C.RIGHT_BRACE   = 0x2;
+const LEFT_BRACKET  = C.LEFT_BRACKET  = 0x3;
+const RIGHT_BRACKET = C.RIGHT_BRACKET = 0x4;
+const COLON         = C.COLON         = 0x5;
+const COMMA         = C.COMMA         = 0x6;
+const TRUE          = C.TRUE          = 0x7;
+const FALSE         = C.FALSE         = 0x8;
+const NULL          = C.NULL          = 0x9;
+const STRING        = C.STRING        = 0xa;
+const NUMBER        = C.NUMBER        = 0xb;
 // Tokenizer States
-var START   = C.START   = 0x11;
-var STOP    = C.STOP    = 0x12;
-var TRUE1   = C.TRUE1   = 0x21;
-var TRUE2   = C.TRUE2   = 0x22;
-var TRUE3   = C.TRUE3   = 0x23;
-var FALSE1  = C.FALSE1  = 0x31;
-var FALSE2  = C.FALSE2  = 0x32;
-var FALSE3  = C.FALSE3  = 0x33;
-var FALSE4  = C.FALSE4  = 0x34;
-var NULL1   = C.NULL1   = 0x41;
-var NULL2   = C.NULL2   = 0x42;
-var NULL3   = C.NULL3   = 0x43;
-var NUMBER1 = C.NUMBER1 = 0x51;
-var NUMBER3 = C.NUMBER3 = 0x53;
-var STRING1 = C.STRING1 = 0x61;
-var STRING2 = C.STRING2 = 0x62;
-var STRING3 = C.STRING3 = 0x63;
-var STRING4 = C.STRING4 = 0x64;
-var STRING5 = C.STRING5 = 0x65;
-var STRING6 = C.STRING6 = 0x66;
+const START   = C.START   = 0x11;
+const STOP    = C.STOP    = 0x12;
+const TRUE1   = C.TRUE1   = 0x21;
+const TRUE2   = C.TRUE2   = 0x22;
+const TRUE3   = C.TRUE3   = 0x23;
+const FALSE1  = C.FALSE1  = 0x31;
+const FALSE2  = C.FALSE2  = 0x32;
+const FALSE3  = C.FALSE3  = 0x33;
+const FALSE4  = C.FALSE4  = 0x34;
+const NULL1   = C.NULL1   = 0x41;
+const NULL2   = C.NULL2   = 0x42;
+const NULL3   = C.NULL3   = 0x43;
+const NUMBER1 = C.NUMBER1 = 0x51;
+const NUMBER3 = C.NUMBER3 = 0x53;
+const STRING1 = C.STRING1 = 0x61;
+const STRING2 = C.STRING2 = 0x62;
+const STRING3 = C.STRING3 = 0x63;
+const STRING4 = C.STRING4 = 0x64;
+const STRING5 = C.STRING5 = 0x65;
+const STRING6 = C.STRING6 = 0x66;
 // Parser States
-var VALUE   = C.VALUE   = 0x71;
-var KEY     = C.KEY     = 0x72;
+const VALUE   = C.VALUE   = 0x71;
+const KEY     = C.KEY     = 0x72;
 // Parser Modes
-var OBJECT  = C.OBJECT  = 0x81;
-var ARRAY   = C.ARRAY   = 0x82;
+const OBJECT  = C.OBJECT  = 0x81;
+const ARRAY   = C.ARRAY   = 0x82;
 // Character constants
-var BACK_SLASH =      "\\".charCodeAt(0);
-var FORWARD_SLASH =   "\/".charCodeAt(0);
-var BACKSPACE =       "\b".charCodeAt(0);
-var FORM_FEED =       "\f".charCodeAt(0);
-var NEWLINE =         "\n".charCodeAt(0);
-var CARRIAGE_RETURN = "\r".charCodeAt(0);
-var TAB =             "\t".charCodeAt(0);
+const BACK_SLASH =      "\\".charCodeAt(0);
+const FORWARD_SLASH =   "\/".charCodeAt(0);
+const BACKSPACE =       "\b".charCodeAt(0);
+const FORM_FEED =       "\f".charCodeAt(0);
+const NEWLINE =         "\n".charCodeAt(0);
+const CARRIAGE_RETURN = "\r".charCodeAt(0);
+const TAB =             "\t".charCodeAt(0);
 
-var STRING_BUFFER_SIZE = 64 * 1024;
+const STRING_BUFFER_SIZE = 64 * 1024;
 
 function alloc(size) {
   return Buffer.alloc ? Buffer.alloc(size) : new Buffer(size);
 }
 
-function Parser() {
+export class Parser {
+  constructor() {
   this.tState = START;
   this.value = undefined;
 
@@ -78,31 +79,30 @@ function Parser() {
 }
 
 // Slow code to string converter (only used when throwing syntax errors)
-Parser.toknam = function (code) {
-  var keys = Object.keys(C);
-  for (var i = 0, l = keys.length; i < l; i++) {
-    var key = keys[i];
+static toknam(code) {
+  const keys = Object.keys(C);
+  for (let i = 0, l = keys.length; i < l; i++) {
+    const key = keys[i];
     if (C[key] === code) { return key; }
   }
   return code && ("0x" + code.toString(16));
-};
+}
 
-var proto = Parser.prototype;
-proto.onError = function (err) { throw err; };
-proto.charError = function (buffer, i) {
+onError(err) { throw err; }
+charError(buffer, i) {
   this.tState = STOP;
   this.onError(new Error("Unexpected " + JSON.stringify(String.fromCharCode(buffer[i])) + " at position " + i + " in state " + Parser.toknam(this.tState)));
-};
-proto.appendStringChar = function (char) {
+}
+appendStringChar(char) {
   if (this.stringBufferOffset >= STRING_BUFFER_SIZE) {
     this.string += this.stringBuffer.toString('utf8');
     this.stringBufferOffset = 0;
   }
 
   this.stringBuffer[this.stringBufferOffset++] = char;
-};
-proto.appendStringBuf = function (buf, start, end) {
-  var size = buf.length;
+}
+appendStringBuf(buf, start, end) {
+  let size = buf.length;
   if (typeof start === 'number') {
     if (typeof end === 'number') {
       if (end < 0) {
@@ -127,11 +127,11 @@ proto.appendStringBuf = function (buf, start, end) {
 
   buf.copy(this.stringBuffer, this.stringBufferOffset, start, end);
   this.stringBufferOffset += size;
-};
-proto.write = function (buffer) {
+}
+write(buffer) {
   if (typeof buffer === "string") buffer = new Buffer(buffer);
-  var n;
-  for (var i = 0, l = buffer.length; i < l; i++) {
+  let n;
+  for (let i = 0, l = buffer.length; i < l; i++) {
     if (this.tState === START){
       n = buffer[i];
       this.offset++;
@@ -163,7 +163,7 @@ proto.write = function (buffer) {
       // check for carry over of a multi byte char split between data chunks
       // & fill temp buffer it with start of this data chunk up to the boundary limit set in the last iteration
       if (this.bytes_remaining > 0) {
-        for (var j = 0; j < this.bytes_remaining; j++) {
+        for (let j = 0; j < this.bytes_remaining; j++) {
           this.temp_buffs[this.bytes_in_sequence][this.bytes_in_sequence - this.bytes_remaining + j] = buffer[j];
         }
 
@@ -178,7 +178,7 @@ proto.write = function (buffer) {
         if ((n >= 224) && (n <= 239)) this.bytes_in_sequence = 3;
         if ((n >= 240) && (n <= 244)) this.bytes_in_sequence = 4;
         if ((this.bytes_in_sequence + i) > buffer.length) { // if bytes needed to complete char fall outside buffer length, we have a boundary split
-          for (var k = 0; k <= (buffer.length - 1 - i); k++) {
+          for (let k = 0; k <= (buffer.length - 1 - i); k++) {
             this.temp_buffs[this.bytes_in_sequence][k] = buffer[i + k]; // fill temp buffer of correct size with bytes available in this chunk
           }
           this.bytes_remaining = (i + this.bytes_in_sequence) - buffer.length;
@@ -222,7 +222,7 @@ proto.write = function (buffer) {
       if ((n >= 0x30 && n < 0x40) || (n > 0x40 && n <= 0x46) || (n > 0x60 && n <= 0x66)) {
         this.unicode += String.fromCharCode(n);
         if (this.tState++ === STRING6) {
-          var intVal = parseInt(this.unicode, 16);
+          const intVal = parseInt(this.unicode, 16);
           this.unicode = undefined;
           if (this.highSurrogate !== undefined && intVal >= 0xDC00 && intVal < (0xDFFF + 1)) { //<56320,57343> - lowSurrogate
             this.appendStringBuf(new Buffer(String.fromCharCode(this.highSurrogate, intVal)));
@@ -265,7 +265,7 @@ proto.write = function (buffer) {
             break;
           default:
             this.tState = START;
-            var error = this.numberReviver(this.string);
+            const error = this.numberReviver(this.string);
             if (error){
               return error;
             }
@@ -307,35 +307,35 @@ proto.write = function (buffer) {
       else { return this.charError(buffer, i); }
     }
   }
-};
-proto.onToken = function (token, value) {
+}
+onToken(token, value) {
   // Override this to get events
-};
+}
 
-proto.parseError = function (token, value) {
+parseError(token, value) {
   this.tState = STOP;
   this.onError(new Error("Unexpected " + Parser.toknam(token) + (value ? ("(" + JSON.stringify(value) + ")") : "") + " in state " + Parser.toknam(this.state)));
-};
-proto.push = function () {
+}
+push() {
   this.stack.push({value: this.value, key: this.key, mode: this.mode});
-};
-proto.pop = function () {
-  var value = this.value;
-  var parent = this.stack.pop();
+}
+pop() {
+  const value = this.value;
+  const parent = this.stack.pop();
   this.value = parent.value;
   this.key = parent.key;
   this.mode = parent.mode;
   this.emit(value);
   if (!this.mode) { this.state = VALUE; }
-};
-proto.emit = function (value) {
+}
+emit(value) {
   if (this.mode) { this.state = COMMA; }
   this.onValue(value);
-};
-proto.onValue = function (value) {
+}
+onValue(value) {
   // Override me
-};
-proto.onToken = function (token, value) {
+}
+onToken(token, value) {
   if(this.state === VALUE){
     if(token === STRING || token === NUMBER || token === TRUE || token === FALSE || token === NULL){
       if (this.value) {
@@ -406,8 +406,8 @@ proto.onToken = function (token, value) {
 
 // Override to implement your own number reviver.
 // Any value returned is treated as error and will interrupt parsing.
-proto.numberReviver = function (text) {
-  var result = Number(text);
+numberReviver(text) {
+  const result = Number(text);
 
   if (isNaN(result)) {
     return this.charError(buffer, i);
@@ -420,7 +420,6 @@ proto.numberReviver = function (text) {
     this.onToken(NUMBER, result);
   }
 }
+}
 
 Parser.C = C;
-
-module.exports = Parser;
