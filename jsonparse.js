@@ -52,7 +52,7 @@ const TAB =             "\t".charCodeAt(0);
 const STRING_BUFFER_SIZE = 64 * 1024;
 
 function alloc(size) {
-  return Buffer.alloc ? Buffer.alloc(size) : new Buffer(size);
+  return new Uint8Array(size);
 }
 
 export class Parser {
@@ -74,6 +74,9 @@ export class Parser {
   this.bytes_in_sequence = 0; // bytes in multi byte utf8 char to read
   this.temp_buffs = { "2": alloc(2), "3": alloc(3), "4": alloc(4) }; // for rebuilding chars split before boundary is reached
 
+  this.encoder = new TextEncoder();
+  this.decoder = new TextDecoder();
+
   // Stream offset
   this.offset = -1;
 }
@@ -88,6 +91,9 @@ static toknam(code) {
   return code && ("0x" + code.toString(16));
 }
 
+encode(string) { return this.encoder.encode(string) }
+decode(buffer) { return this.decoder.decode(buffer) }
+
 onError(err) { throw err; }
 charError(buffer, i) {
   this.tState = STOP;
@@ -95,7 +101,7 @@ charError(buffer, i) {
 }
 appendStringChar(char) {
   if (this.stringBufferOffset >= STRING_BUFFER_SIZE) {
-    this.string += this.stringBuffer.toString('utf8');
+    this.string += this.decode(this.stringBuffer);
     this.stringBufferOffset = 0;
   }
 
@@ -121,15 +127,16 @@ appendStringBuf(buf, start, end) {
   }
 
   if (this.stringBufferOffset + size > STRING_BUFFER_SIZE) {
-    this.string += this.stringBuffer.toString('utf8', 0, this.stringBufferOffset);
+    this.string += this.decode(this.stringBuffer.subarray(0, this.stringBufferOffset));
     this.stringBufferOffset = 0;
   }
 
-  buf.copy(this.stringBuffer, this.stringBufferOffset, start, end);
+  // buf.copy(this.stringBuffer, this.stringBufferOffset, start, end);
+  this.stringBuffer.set(this.stringBufferOffset, buf.subarray(start, end));
   this.stringBufferOffset += size;
 }
 write(buffer) {
-  if (typeof buffer === "string") buffer = new Buffer(buffer);
+  if (typeof buffer === "string") buffer = this.encode(buffer);
   let n;
   for (let i = 0, l = buffer.length; i < l; i++) {
     if (this.tState === START){
@@ -189,10 +196,10 @@ write(buffer) {
         }
       } else if (n === 0x22) {
         this.tState = START;
-        this.string += this.stringBuffer.toString('utf8', 0, this.stringBufferOffset);
+        this.string += this.decode(this.stringBuffer.subarray(0, this.stringBufferOffset));
         this.stringBufferOffset = 0;
         this.onToken(STRING, this.string);
-        this.offset += Buffer.byteLength(this.string, 'utf8') + 1;
+        this.offset += this.encode(this.string).length + 1;
         this.string = undefined;
       }
       else if (n === 0x5c) {
@@ -225,16 +232,16 @@ write(buffer) {
           const intVal = parseInt(this.unicode, 16);
           this.unicode = undefined;
           if (this.highSurrogate !== undefined && intVal >= 0xDC00 && intVal < (0xDFFF + 1)) { //<56320,57343> - lowSurrogate
-            this.appendStringBuf(new Buffer(String.fromCharCode(this.highSurrogate, intVal)));
+            this.appendStringBuf(this.encode(String.fromCharCode(this.highSurrogate, intVal)));
             this.highSurrogate = undefined;
           } else if (this.highSurrogate === undefined && intVal >= 0xD800 && intVal < (0xDBFF + 1)) { //<55296,56319> - highSurrogate
             this.highSurrogate = intVal;
           } else {
             if (this.highSurrogate !== undefined) {
-              this.appendStringBuf(new Buffer(String.fromCharCode(this.highSurrogate)));
+              this.appendStringBuf(this.encode(String.fromCharCode(this.highSurrogate)));
               this.highSurrogate = undefined;
             }
-            this.appendStringBuf(new Buffer(String.fromCharCode(intVal)));
+            this.appendStringBuf(this.encode(String.fromCharCode(intVal)));
           }
           this.tState = STRING1;
         }
