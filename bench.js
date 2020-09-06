@@ -1,9 +1,12 @@
-var fs = require('fs'),
-    Parser = require('./jsonparse');
+import { JSONParser as Parser } from './jsonparse.js'
 
+(async () => {
 
-var json = fs.readFileSync("samplejson/basic.json");
+const FILE = './samplejson/basic.json';
 
+const json = await (typeof Deno !== 'undefined' 
+  ? Deno.readTextFile(FILE)
+  : fetch(FILE).then(x => x.text()));
 
 while (true) {
   var start = Date.now();
@@ -24,3 +27,5 @@ while (true) {
   console.log("streaming parser took %s", second);
   console.log("streaming is %s times slower", second / first);
 }
+
+})();
