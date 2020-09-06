@@ -55,7 +55,7 @@ function alloc(size) {
   return new Uint8Array(size);
 }
 
-export class Parser {
+class Parser {
   constructor() {
   this.tState = START;
   this.value = undefined;
@@ -131,8 +131,7 @@ appendStringBuf(buf, start, end) {
     this.stringBufferOffset = 0;
   }
 
-  // buf.copy(this.stringBuffer, this.stringBufferOffset, start, end);
-  this.stringBuffer.set(this.stringBufferOffset, buf.subarray(start, end));
+  this.stringBuffer.set(buf.subarray(start, end), this.stringBufferOffset);
   this.stringBufferOffset += size;
 }
 write(buffer) {
@@ -170,7 +169,8 @@ write(buffer) {
       // check for carry over of a multi byte char split between data chunks
       // & fill temp buffer it with start of this data chunk up to the boundary limit set in the last iteration
       if (this.bytes_remaining > 0) {
-        for (let j = 0; j < this.bytes_remaining; j++) {
+        let j;
+        for (j = 0; j < this.bytes_remaining; j++) {
           this.temp_buffs[this.bytes_in_sequence][this.bytes_in_sequence - this.bytes_remaining + j] = buffer[j];
         }
 
@@ -430,3 +430,6 @@ numberReviver(text) {
 }
 
 Parser.C = C;
+
+export { Parser as JSONParser };
+export default Parser;
