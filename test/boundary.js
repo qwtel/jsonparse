@@ -1,5 +1,5 @@
-var test = require('tape');
-var Parser = require('../');
+import test from 'tape';
+import { JSONParser as Parser } from '../index.js'
 
 test('2 byte utf8 \'De\' character: д', function (t) {
   t.plan(1);

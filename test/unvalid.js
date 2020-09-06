@@ -1,5 +1,5 @@
-var test = require('tape');
-var Parser = require('../');
+import test from 'tape';
+import { JSONParser as Parser } from '../index.js'
 
 test('unvalid', function (t) {
   var count = 0;

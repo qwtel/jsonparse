@@ -1,6 +1,5 @@
-var stream = require('stream');
-var JsonParse = require('../jsonparse');
-var test = require('tape');
+import { JSONParser as JsonParse } from '../index.js'
+import test from 'tape';
 
 test('can handle large tokens without running out of memory', function (t) {
   var parser = new JsonParse();

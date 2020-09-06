@@ -1,5 +1,5 @@
-var test = require('tape');
-var Parser = require('../');
+import test from 'tape';
+import { JSONParser as Parser } from '../index.js'
 
 var input = '{\n  "string": "value",\n  "number": 3,\n  "object"';
 var input2 = ': {\n  "key": "vд"\n  },\n  "array": [\n  -1,\n  12\n  ]\n  ';
